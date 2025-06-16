@@ -1,0 +1,19 @@
+{
+  "name": "trabalho-meio-ambiente",
+  "version": "1.0.0",
+  "description": "## 📋 Descrição",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "npx json-server db.json --port 3001 --host 0.0.0.0",
+    "start": "npx json-server db.json --port 3001 --host 0.0.0.0",
+    "dev": "npx json-server db.json --port 3001 --host 0.0.0.0",
+    "backup": "cp db.json db.backup.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "json-server": "^1.0.0-beta.3"
+  }
+}

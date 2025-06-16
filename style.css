@@ -1,0 +1,1103 @@
+/* Variáveis de cores */
+:root {
+  --primary-color: #1976d2;
+  --primary-light: #42a5f5;
+  --primary-dark: #1565c0;
+  --secondary-color: #2ecc71;
+  --secondary-light: #4cd137;
+  --secondary-dark: #27ae60;
+  --background-light: #f0f8ff;
+  --text-dark: #2c3e50;
+  --text-light: #ffffff;
+  --shadow-color: rgba(25, 118, 210, 0.1);
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--secondary-color)
+  );
+  --gradient-light: linear-gradient(
+    135deg,
+    var(--primary-light),
+    var(--secondary-light)
+  );
+}
+
+/* Estilos globais */
+body {
+  background: var(--background-light);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+
+/* Navbar e elementos de navegação */
+.navbar {
+  background: var(--gradient-primary) !important;
+  box-shadow: 0 4px 20px var(--shadow-color);
+  padding: 1rem;
+  border-radius: 0 0 20px 20px;
+}
+
+.navbar .nav-link {
+  color: var(--text-light) !important;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-light) !important;
+}
+
+/* Score Bar */
+.score-bar {
+  background: var(--gradient-primary) !important;
+  border-radius: 0 0 0 20px;
+  padding: 1rem;
+  box-shadow: 0 4px 20px var(--shadow-color);
+  animation: slideIn 0.5s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Botões e elementos interativos */
+.btn-primary {
+  background: var(--primary-color) !important;
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-success {
+  background: var(--secondary-color) !important;
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px var(--shadow-color);
+}
+
+/* Cards e containers */
+.card {
+  background: white;
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 8px 30px var(--shadow-color);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px var(--shadow-color);
+}
+
+/* Jogos específicos */
+/* Quiz */
+.quiz-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.quiz-image {
+  max-width: 150px;
+  max-height: 150px;
+  width: auto;
+  height: auto;
+  border-radius: 15px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 25px var(--shadow-color);
+  padding: 1rem;
+  background: white;
+  transition: all 0.3s ease;
+  object-fit: contain;
+}
+
+/* Jogo de Memória */
+.memory-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 15px;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.memory-card {
+  aspect-ratio: 1;
+  border-radius: 15px;
+  background: white;
+  box-shadow: 0 4px 15px var(--shadow-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  perspective: 1000px;
+  position: relative;
+}
+
+.memory-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px var(--shadow-color);
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.memory-card.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-primary);
+  color: white;
+}
+
+.card-back {
+  background: white;
+  color: var(--text-dark);
+  transform: rotateY(180deg);
+}
+
+.card-back img {
+  max-width: 60%;
+  max-height: 60%;
+  object-fit: contain;
+}
+
+.card-front i {
+  font-size: 2rem;
+}
+
+.memory-card.matched .card-inner {
+  transform: rotateY(180deg);
+  opacity: 0.7;
+}
+
+.memory-card.matched {
+  animation: matchPulse 0.6s ease;
+}
+
+@keyframes matchPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Modal de fim de jogo */
+.game-over-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+.game-over-modal .card {
+  max-width: 400px;
+  width: 90%;
+  margin: 2rem;
+}
+
+/* Seletor de dificuldade */
+.difficulty-selector .btn {
+  min-width: 80px;
+  margin: 0 2px;
+  text-transform: capitalize;
+}
+
+/* Status bar do jogo */
+.status-bar .badge {
+  font-size: 0.9rem;
+  padding: 0.5rem 0.8rem;
+  margin: 0.2rem;
+}
+
+.status-bar .col {
+  text-align: center;
+}
+
+/* ===========================================
+   ESTILOS PARA AVATARES E IMAGENS
+   =========================================== */
+
+/* Avatares no modal de seleção */
+.avatar-btn {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important;
+  padding: 4px !important;
+  transition: all 0.3s ease;
+  border: 2px solid var(--primary-light) !important;
+  background: white;
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.avatar-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px var(--shadow-color);
+  border-color: var(--secondary-color) !important;
+}
+
+.avatar-btn.active {
+  border-color: var(--secondary-color) !important;
+  background: var(--gradient-light) !important;
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+}
+
+.avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+/* Avatar pequeno na barra de pontuação */
+.avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid white;
+  object-fit: contain;
+  background: white;
+  padding: 2px;
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* Avatar na navbar */
+.avatar-nav {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  object-fit: contain;
+  background: white;
+  padding: 1px;
+}
+
+/* Container de avatares no modal */
+.modal-body .d-flex.flex-wrap {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 1rem;
+  background: var(--background-light);
+  border-radius: 15px;
+  border: 2px dashed var(--primary-light);
+}
+
+/* Scrollbar personalizada */
+.modal-body .d-flex.flex-wrap::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body .d-flex.flex-wrap::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.modal-body .d-flex.flex-wrap::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 3px;
+}
+
+/* ===========================================
+   IMAGENS DOS JOGOS - PROPORÇÕES CORRETAS
+   =========================================== */
+
+/* Imagens do Quiz */
+.quiz-image {
+  max-width: 150px;
+  max-height: 150px;
+  width: auto;
+  height: auto;
+  border-radius: 15px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 25px var(--shadow-color);
+  padding: 1rem;
+  background: white;
+  transition: all 0.3s ease;
+  object-fit: contain;
+}
+
+/* Imagens do jogo Click */
+.click-image {
+  max-width: 120px;
+  max-height: 120px;
+  width: auto;
+  height: auto;
+  border-radius: 15px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 25px var(--shadow-color);
+  padding: 1rem;
+  background: white;
+  transition: all 0.3s ease;
+  object-fit: contain;
+}
+
+/* Imagens do jogo Drag */
+.drag-image {
+  max-width: 100px;
+  max-height: 100px;
+  width: auto;
+  height: auto;
+  border-radius: 15px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 25px var(--shadow-color);
+  padding: 1rem;
+  background: white;
+  transition: all 0.3s ease;
+  object-fit: contain;
+}
+
+/* Itens arrastáveis */
+.draggable-item {
+  padding: 0.8rem;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px var(--shadow-color);
+  cursor: grab;
+  transition: all 0.3s ease;
+  width: 90px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.draggable-item img {
+  width: 40px !important;
+  height: 40px !important;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+}
+
+.draggable-item div {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* Zonas de drop */
+.drop-zone {
+  padding: 1.5rem;
+  border: 3px dashed var(--primary-light);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+
+.drop-zone:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px var(--shadow-color);
+  border-width: 4px;
+}
+
+.drop-zone img {
+  width: 36px !important;
+  height: 36px !important;
+  object-fit: contain;
+  margin-bottom: 0.3rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.drop-zone .fw-bold {
+  font-size: 0.75rem;
+  line-height: 1.1;
+  margin-bottom: 0.2rem;
+}
+
+.drop-zone small {
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Cores específicas das lixeiras */
+.drop-zone[data-color="Amarelo"] {
+  border-color: #ffc107 !important;
+  background: rgba(255, 193, 7, 0.1);
+}
+
+.drop-zone[data-color="Azul"] {
+  border-color: #007bff !important;
+  background: rgba(0, 123, 255, 0.1);
+}
+
+.drop-zone[data-color="Marrom"] {
+  border-color: #8b4513 !important;
+  background: rgba(139, 69, 19, 0.1);
+}
+
+.drop-zone[data-color="Vermelho"] {
+  border-color: #dc3545 !important;
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.drop-zone[data-color="Verde"] {
+  border-color: #28a745 !important;
+  background: rgba(40, 167, 69, 0.1);
+}
+
+/* Efeito de drag over */
+.drop-zone.drag-over {
+  border-color: var(--secondary-color) !important;
+  background: rgba(46, 204, 113, 0.2);
+  transform: scale(1.1);
+}
+
+/* Modal melhorado */
+.modal-content {
+  border-radius: 25px;
+  border: none;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.modal-header {
+  background: var(--gradient-primary);
+  color: var(--text-light);
+  border-radius: 25px 25px 0 0;
+  padding: 2rem;
+  text-align: center;
+  border: none;
+}
+
+.modal-body {
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Formulário do modal */
+.form-control,
+.form-select {
+  border-radius: 15px;
+  border: 2px solid var(--primary-light);
+  padding: 0.8rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 0.2rem rgba(46, 204, 113, 0.2);
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+/* ===========================================
+   RESPONSIVIDADE AVANÇADA
+   =========================================== */
+
+/* Tablets e dispositivos médios */
+@media (max-width: 768px) {
+  .navbar-brand {
+    font-size: 1.2rem;
+  }
+
+  .score-bar {
+    font-size: 0.9rem;
+    padding: 0.8rem;
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 1030;
+    border-radius: 0 0 0 15px;
+  }
+
+  .navbar {
+    margin-top: 60px;
+  }
+
+  .memory-board {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 0.5rem;
+  }
+
+  .quiz-image,
+  .click-image {
+    max-width: 100px;
+    max-height: 100px;
+  }
+
+  .drag-image {
+    max-width: 80px;
+    max-height: 80px;
+  }
+
+  .avatar-btn {
+    width: 45px !important;
+    height: 45px !important;
+  }
+
+  .modal-header {
+    padding: 1.5rem;
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+  }
+
+  .modal-title {
+    font-size: 1.2rem;
+  }
+
+  .draggable-item,
+  .drop-zone {
+    width: 80px;
+    height: 85px;
+  }
+
+  .draggable-item img,
+  .drop-zone img {
+    width: 32px !important;
+    height: 32px !important;
+  }
+}
+
+/* Smartphones */
+@media (max-width: 576px) {
+  .memory-board {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .quiz-image,
+  .click-image {
+    max-width: 80px;
+    max-height: 80px;
+    padding: 0.5rem;
+  }
+
+  .drag-image {
+    max-width: 60px;
+    max-height: 60px;
+    padding: 0.5rem;
+  }
+
+  .avatar-btn {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .avatar-small {
+    width: 24px;
+    height: 24px;
+  }
+
+  .avatar-nav {
+    width: 22px;
+    height: 22px;
+  }
+
+  .modal-content {
+    margin: 5px;
+    border-radius: 20px;
+  }
+
+  .modal-body .d-flex.flex-wrap {
+    max-height: 150px;
+    padding: 0.5rem;
+  }
+
+  .draggable-item,
+  .drop-zone {
+    width: 70px;
+    height: 75px;
+    padding: 0.5rem;
+  }
+
+  .draggable-item img,
+  .drop-zone img {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .draggable-item div,
+  .drop-zone .fw-bold {
+    font-size: 0.7rem;
+  }
+
+  .btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Dispositivos muito pequenos */
+@media (max-width: 400px) {
+  .score-bar {
+    font-size: 0.8rem;
+    padding: 0.5rem;
+  }
+
+  .navbar-brand {
+    font-size: 1rem;
+  }
+
+  .quiz-image,
+  .click-image,
+  .drag-image {
+    max-width: 60px;
+    max-height: 60px;
+  }
+
+  .avatar-btn {
+    width: 35px !important;
+    height: 35px !important;
+  }
+
+  .modal-body .d-flex.flex-wrap {
+    max-height: 120px;
+  }
+
+  .draggable-item,
+  .drop-zone {
+    width: 60px;
+    height: 65px;
+  }
+
+  .draggable-item img,
+  .drop-zone img {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+/* ===========================================
+   MELHORIAS VISUAIS MODERNAS
+   =========================================== */
+
+/* Efeito glassmorphism */
+.card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Botões com gradiente */
+.btn-primary {
+  background: var(--gradient-primary) !important;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+/* Animações suaves */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Efeitos de hover melhorados */
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px var(--shadow-color);
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 50px var(--shadow-color);
+}
+
+/* Loading spinner para imagens */
+img {
+  transition: opacity 0.3s ease;
+}
+
+img[src=""] {
+  opacity: 0;
+}
+
+/* ===========================================
+   RANKING E TABELAS
+   =========================================== */
+
+/* Tabela de ranking */
+.ranking-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 12px;
+  margin-top: 1rem;
+}
+
+.ranking-table thead tr {
+  background: var(--gradient-primary);
+}
+
+.ranking-table th {
+  background: var(--gradient-primary);
+  color: var(--text-light);
+  padding: 1rem;
+  font-weight: 600;
+  text-align: center;
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px var(--shadow-color);
+}
+
+.ranking-table tbody tr {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px var(--shadow-color);
+  transition: all 0.3s ease;
+  border-radius: 15px;
+}
+
+.ranking-table tbody tr:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px var(--shadow-color);
+}
+
+.ranking-table td {
+  padding: 1rem;
+  vertical-align: middle;
+  border: none;
+  text-align: center;
+  font-weight: 500;
+}
+
+.ranking-table td:first-child {
+  border-radius: 15px 0 0 15px;
+}
+
+.ranking-table td:last-child {
+  border-radius: 0 15px 15px 0;
+}
+
+/* Medalhas do ranking */
+.medal {
+  font-size: 1.5rem;
+  display: inline-block;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* User info na navbar */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 25px;
+  backdrop-filter: blur(10px);
+}
+
+/* ===========================================
+   MELHORIAS NOS JOGOS
+   =========================================== */
+
+/* Progress bar personalizada */
+.progress {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 25px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+  background: var(--gradient-primary) !important;
+  transition: width 0.6s ease;
+  border-radius: 25px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-image: linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 50px 50px;
+  animation: move 2s linear infinite;
+}
+
+@keyframes move {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 50px 50px;
+  }
+}
+
+/* Badges melhoradas */
+.badge {
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.badge.bg-primary {
+  background: var(--gradient-primary) !important;
+}
+
+.badge.bg-success {
+  background: linear-gradient(135deg, #28a745, #20c997) !important;
+}
+
+.badge.bg-warning {
+  background: linear-gradient(135deg, #ffc107, #ff8c00) !important;
+  color: white !important;
+}
+
+.badge.bg-info {
+  background: linear-gradient(135deg, #17a2b8, #007bff) !important;
+}
+
+/* Option buttons no quiz */
+.option-button {
+  font-weight: 500;
+  border: 2px solid var(--primary-light) !important;
+  border-radius: 15px !important;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.option-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px var(--shadow-color);
+}
+
+.option-button.btn-success {
+  background: var(--secondary-color) !important;
+  border-color: var(--secondary-color) !important;
+  animation: pulse 0.6s ease;
+}
+
+.option-button.btn-danger {
+  background: #ff7675 !important;
+  border-color: #ff7675 !important;
+  animation: shake 0.6s ease;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+/* ===========================================
+   MELHORIAS DE ACESSIBILIDADE
+   =========================================== */
+
+/* Focus states melhorados */
+.btn:focus,
+.form-control:focus,
+.form-select:focus,
+.avatar-btn:focus {
+  outline: 3px solid rgba(46, 204, 113, 0.5);
+  outline-offset: 2px;
+}
+
+/* Reduce motion para acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  :root {
+    --shadow-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .btn,
+  .card,
+  .avatar-btn {
+    border: 2px solid #000 !important;
+  }
+}
+
+/* ===========================================
+   LOADING E ESTADOS
+   =========================================== */
+
+/* Loading state para imagens */
+.loading-placeholder {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 15px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Error state */
+.error-state {
+  color: #ff7675;
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 118, 117, 0.1);
+  border-radius: 15px;
+  border: 2px dashed #ff7675;
+}
+
+/* Success state */
+.success-state {
+  color: var(--secondary-color);
+  text-align: center;
+  padding: 2rem;
+  background: rgba(46, 204, 113, 0.1);
+  border-radius: 15px;
+  border: 2px dashed var(--secondary-color);
+}

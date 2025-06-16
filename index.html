@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eco Games - Aprenda sobre Meio Ambiente!</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <!-- Vue.js -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css">
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/616/616408.png">
+</head>
+<body>
+  <div id="app">
+    <!-- Modal de Boas-vindas -->
+    <div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content animate__animated animate__fadeIn">
+          <div class="modal-header">
+            <h5 class="modal-title" id="welcomeModalLabel">
+              <i class="bi bi-globe-americas me-2"></i>Bem-vindo aos Eco Games!
+            </h5>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="saveUserInfo" class="needs-validation" novalidate>
+              <div class="mb-3">
+                <label for="userName" class="form-label">
+                  <i class="bi bi-person-fill me-2"></i>Seu nome
+                </label>
+                <input type="text" class="form-control" id="userName" v-model="userName" required maxlength="20" placeholder="Digite seu nome">
+              </div>
+              <div class="mb-3">
+                <label for="userClassYear" class="form-label">
+                  <i class="bi bi-book-fill me-2"></i>Ano
+                </label>
+                <select class="form-select" id="userClassYear" v-model="userClassYear" required>
+                  <option value="" disabled>Selecione o ano</option>
+                  <option v-for="ano in anosEscolares" :key="ano" :value="ano">{{ ano }}</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="userClassLetter" class="form-label">
+                  <i class="bi bi-bookmark-fill me-2"></i>Sala
+                </label>
+                <input type="text" class="form-control" id="userClassLetter" v-model="userClassLetter" required maxlength="5" placeholder="Ex: A, 1, 2B...">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">
+                  <i class="bi bi-image-fill me-2"></i>Escolha seu avatar
+                </label>
+                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                  <button v-for="(icon, idx) in userIcons" :key="icon" type="button"
+                          class="btn btn-outline-primary p-2 avatar-btn"
+                          :class="{active: userIcon === icon}"
+                          @click="userIcon = icon">
+                    <img :src="icon" class="avatar-img" alt="Avatar">
+                  </button>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 mt-3">
+                <i class="bi bi-play-fill me-2"></i>Começar a Jogar
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de Pontuação -->
+    <div class="score-bar animate__animated animate__slideInDown">
+      <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-star-fill text-warning"></i>
+        <span class="fw-bold">Pontos:</span>
+        <span class="fs-4">{{ points }}</span>
+        <img :src="userIcon" v-if="userIcon" class="avatar-small" alt="Avatar">
+      </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+          <i class="bi bi-globe-americas me-2"></i>Eco Games
+        </a>
+        <div class="d-flex align-items-center order-lg-2 ms-auto mb-2 mb-lg-0">
+          <div v-if="userName" class="user-info">
+            <img v-if="userIcon" :src="userIcon" class="avatar-nav me-2" alt="Avatar">
+            <span class="fw-bold text-white me-2">{{ userName }}</span>
+            <span class="badge bg-light text-primary">{{ userClass }}</span>
+          </div>
+        </div>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item" v-for="game in games" :key="game.route">
+              <a class="nav-link" :class="{active: currentPage === game.route}"
+                 href="#" @click.prevent="navigate(game.route)">
+                <i :class="game.icon + ' me-2'"></i>{{ game.name }}
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <main class="container mb-5">
+      <div v-if="currentPage === 'ranking'" class="card shadow-lg animate__animated animate__fadeIn">
+        <div class="card-body">
+          <h2 class="text-center mb-4">
+            <i class="bi bi-trophy-fill text-warning me-2"></i>Ranking
+            <span class="ms-3">
+              <span v-if="connectionStatus === 'checking'" class="badge bg-warning">
+                <i class="bi bi-hourglass-split"></i> Verificando...
+              </span>
+              <span v-else-if="connectionStatus === 'online'" class="badge bg-success">
+                <i class="bi bi-wifi"></i> Online
+              </span>
+              <span v-else-if="connectionStatus === 'offline'" class="badge bg-danger">
+                <i class="bi bi-wifi-off"></i> Offline
+              </span>
+            </span>
+          </h2>
+          <div class="table-responsive">
+            <table class="ranking-table">
+              <thead>
+                <tr>
+                  <th class="text-center">Posição</th>
+                  <th>Avatar</th>
+                  <th>Nome</th>
+                  <th>Sala</th>
+                  <th class="text-center">Pontos</th>
+                  <th class="text-center">Última Atualização</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(user, idx) in ranking" :key="user.id || (user.name + user.class)"
+                    class="animate__animated animate__fadeIn">
+                  <td class="text-center">
+                    <span v-if="idx === 0" class="medal gold">🥇</span>
+                    <span v-else-if="idx === 1" class="medal silver">🥈</span>
+                    <span v-else-if="idx === 2" class="medal bronze">🥉</span>
+                    <span v-else>{{ idx + 1 }}</span>
+                  </td>
+                  <td class="text-center">
+                    <img v-if="user.avatar" :src="user.avatar" class="avatar-small" alt="Avatar">
+                    <i v-else class="bi bi-person-circle text-muted" style="font-size: 32px;"></i>
+                  </td>
+                  <td>{{ user.name }}</td>
+                  <td>{{ user.class }}</td>
+                  <td class="text-center fw-bold">{{ user.points }}</td>
+                  <td class="text-center text-muted" style="font-size: 0.8rem;">
+                    {{ user.lastUpdate ? formatDate(user.lastUpdate) : 'Local' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div v-else class="game-container animate__animated animate__fadeIn">
+        <component :is="currentComponent" :add-points="addPoints"></component>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4">
+      <div class="container">
+        <p class="mb-0">
+          <i class="bi bi-heart-fill text-danger me-2"></i>
+          Feito com amor para o futuro do nosso planeta
+        </p>
+        <small class="text-muted">Projeto Educativo de Conscientização Ambiental</small>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Main JS -->
+  <script src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+{
+  "ranking": [
+    {
+      "id": "1",
+      "name": "Ana Silva",
+      "class": "5º Ano A",
+      "points": 150,
+      "avatar": "https://cdn-icons-png.flaticon.com/512/616/616408.png",
+      "createdAt": "2025-06-09T19:30:00.000Z",
+      "lastUpdate": "2025-06-09T19:30:00.000Z"
+    },
+    {
+      "id": "2",
+      "name": "Pedro Santos",
+      "class": "4º Ano B",
+      "points": 135,
+      "avatar": "https://cdn-icons-png.flaticon.com/512/427/427735.png",
+      "createdAt": "2025-06-09T19:25:00.000Z",
+      "lastUpdate": "2025-06-09T19:25:00.000Z"
+    },
+    {
+      "id": "3",
+      "name": "Maria Costa",
+      "class": "6º Ano A",
+      "points": 120,
+      "avatar": "https://cdn-icons-png.flaticon.com/512/1684/1684375.png",
+      "createdAt": "2025-06-09T19:20:00.000Z",
+      "lastUpdate": "2025-06-09T19:20:00.000Z"
+    },
+    {
+      "id": "a530",
+      "name": "jimbiliu",
+      "class": "4º Ano asdas",
+      "points": 12,
+      "avatar": "https://cdn-icons-png.flaticon.com/512/616/616490.png",
+      "createdAt": "2025-06-09T19:50:59.037Z",
+      "lastUpdate": "2025-06-09T19:50:59.038Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "1",
+      "name": "Ana Silva",
+      "class": "5º Ano A",
+      "avatar": "https://cdn-icons-png.flaticon.com/512/616/616408.png",
+      "totalGamesPlayed": 15,
+      "quizGames": 8,
+      "dragGames": 4,
+      "memoryGames": 3,
+      "createdAt": "2025-06-09T19:30:00.000Z"
+    }
+  ],
+  "gameStats": [
+    {
+      "id": "1",
+      "userId": 1,
+      "gameType": "quiz",
+      "score": 50,
+      "completedAt": "2025-06-09T19:30:00.000Z"
+    }
+  ]
+}
