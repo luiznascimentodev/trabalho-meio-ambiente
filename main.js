@@ -1932,16 +1932,16 @@ createApp({
         // Recarrega o ranking após salvar
         await this.loadRanking();
       } catch (error) {
-        console.warn(
-          "Erro ao salvar ranking na API, usando localStorage como fallback:",
-          error
+        console.error("Erro ao salvar ranking na API:", error);
+        // Exibe mensagem para o usuário
+        alert(
+          "Não foi possível salvar sua pontuação. Verifique sua conexão com a internet e tente novamente."
         );
-        // Fallback para localStorage se a API não estiver disponível
-        this.saveRankingLocal();
       }
     },
 
-    saveRankingLocal() {
+    // Função removida: saveRankingLocal
+    _saveRankingLocal_disabled() {
       // Fallback para localStorage (método original)
       let ranking = JSON.parse(localStorage.getItem("ranking") || "[]");
       const idx = ranking.findIndex(
@@ -1984,20 +1984,19 @@ createApp({
 
         // Ordena por pontuação (maior primeiro)
         this.ranking = ranking.sort((a, b) => b.points - a.points);
-
-        // Salva como backup no localStorage
-        localStorage.setItem("ranking_backup", JSON.stringify(this.ranking));
       } catch (error) {
-        console.warn(
-          "Erro ao carregar ranking da API, usando localStorage como fallback:",
-          error
+        console.error("Erro ao carregar ranking da API:", error);
+        // Define um ranking vazio em caso de falha
+        this.ranking = [];
+        // Exibe mensagem para o usuário
+        alert(
+          "Não foi possível carregar o ranking. Verifique sua conexão com a internet."
         );
-        // Fallback para localStorage se a API não estiver disponível
-        this.loadRankingLocal();
       }
     },
 
-    loadRankingLocal() {
+    // Função removida: loadRankingLocal
+    _loadRankingLocal_disabled() {
       // Fallback para localStorage (método original)
       const ranking = JSON.parse(
         localStorage.getItem("ranking") ||
@@ -2073,42 +2072,22 @@ createApp({
         if (response.ok) {
           this.connectionStatus = "online";
           this.isOnline = true;
-
-          // Se estava offline e agora está online, tenta sincronizar dados locais
-          if (localStorage.getItem("unsyncedPoints")) {
-            this.syncLocalData();
-          }
         } else {
           throw new Error("API não respondeu corretamente");
         }
       } catch (error) {
-        console.warn("Servidor offline, usando modo local:", error);
+        console.warn("Servidor offline:", error);
         this.connectionStatus = "offline";
         this.isOnline = false;
+        alert(
+          "O servidor não está disponível. Algumas funcionalidades podem não funcionar corretamente. Verifique sua conexão com a internet."
+        );
       }
     },
 
-    // Sincroniza dados armazenados localmente quando voltar a ficar online
-    async syncLocalData() {
-      try {
-        const unsyncedPoints = JSON.parse(
-          localStorage.getItem("unsyncedPoints") || "{}"
-        );
-        if (Object.keys(unsyncedPoints).length === 0) return;
-
-        // Recupera os pontos do usuário atual que estavam em cache
-        if (unsyncedPoints[`${this.userName}-${this.userClass}`]) {
-          this.points = Math.max(
-            this.points,
-            unsyncedPoints[`${this.userName}-${this.userClass}`]
-          );
-          await this.saveRanking(); // Salva no servidor
-        }
-
-        localStorage.removeItem("unsyncedPoints");
-      } catch (error) {
-        console.error("Erro ao sincronizar dados locais:", error);
-      }
+    // Função removida: syncLocalData
+    _syncLocalData_disabled() {
+      // Funcionalidade removida - não sincroniza mais com localStorage
     },
   },
 }).mount("#app");
