@@ -108,6 +108,7 @@ trabalho-meio-ambiente/
 ├── 🗄️ db.json             # Banco de dados (ranking de pontuações)
 ├── 🔧 server.js           # Servidor backend (alternativo)
 ├── 🛠️ package.json        # Configurações do Node.js e dependências
+├── 📝 CONFIGURACAO_JSONBIN.md # Guia para configurar o ranking no GitHub Pages
 ├── 🗺️ routes.json         # Configuração de rotas da API
 ├── 📖 README.md          # Documentação do projeto (este arquivo)
 └── 📋 MELHORIAS_SVG.md   # Documentação das melhorias visuais

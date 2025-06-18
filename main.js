@@ -1754,6 +1754,13 @@ const GameMemory = {
   `,
 };
 
+// Configuração da API JSONbin.io
+const JSONBIN_CONFIG = {
+  binId: "685344b38960c979a5ac7388", // Substitua pelo seu Bin ID após criá-lo no JSONbin.io
+  apiKey: "$2a$10$eq14Z/TaFg/dT3vNMv1PWe2hMfb60MK6jtB3JucPXBisgdf7C/5Sq", // Substitua pela sua chave de API
+  // Versão gratuita: https://jsonbin.io/
+};
+
 // Método para determinar a URL correta da API com base no ambiente
 function getApiUrl() {
   // Verifica se existe uma API configurada específica
@@ -1771,8 +1778,8 @@ function getApiUrl() {
     return "http://localhost:3001";
   }
 
-  // Ambiente de produção (internet)
-  return `${protocol}//${hostname}${port ? ":" + port : ""}/api`;
+  // Ambiente de produção (GitHub Pages) - usa JSONbin.io
+  return "https://api.jsonbin.io/v3/b";
 }
 
 // App principal
@@ -1883,54 +1890,73 @@ createApp({
     },
     async saveRanking() {
       try {
-        // URL da API (detecta automaticamente)
-        // Lógica mais robusta para funcionar na internet
+        // URL da API JSONbin.io
         const API_URL = this.getApiUrl();
 
-        // Verifica se o usuário já existe no ranking
-        const response = await fetch(`${API_URL}/ranking`);
-        const ranking = await response.json();
+        // Primeiro carrega o ranking atual
+        const currentRankingResponse = await fetch(
+          `${API_URL}/${JSONBIN_CONFIG.binId}/latest`,
+          {
+            method: "GET",
+            headers: {
+              "X-Master-Key": JSONBIN_CONFIG.apiKey,
+              "X-Bin-Meta": false, // Para obter apenas os dados, sem metadados
+            },
+          }
+        );
 
-        const existingUser = ranking.find(
+        // Se o bin não existir, inicializa com um ranking vazio
+        let rankingData;
+        if (currentRankingResponse.status === 404) {
+          rankingData = { ranking: [] };
+        } else {
+          rankingData = await currentRankingResponse.json();
+          if (!rankingData.ranking) {
+            rankingData = { ranking: [] };
+          }
+        }
+
+        // Verifica se o usuário já existe no ranking
+        const existingUserIndex = rankingData.ranking.findIndex(
           (u) => u.name === this.userName && u.class === this.userClass
         );
 
-        if (existingUser) {
+        if (existingUserIndex >= 0) {
           // Atualiza pontos apenas se for maior (mantém o melhor resultado)
-          if (this.points > existingUser.points) {
-            await fetch(`${API_URL}/ranking/${existingUser.id}`, {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                ...existingUser,
-                points: this.points,
-                avatar: this.userIcon,
-                lastUpdate: new Date().toISOString(),
-              }),
-            });
+          if (this.points > rankingData.ranking[existingUserIndex].points) {
+            rankingData.ranking[existingUserIndex].points = this.points;
+            rankingData.ranking[existingUserIndex].avatar = this.userIcon;
+            rankingData.ranking[existingUserIndex].lastUpdate =
+              new Date().toISOString();
           }
         } else {
           // Adiciona novo usuário
-          await fetch(`${API_URL}/ranking`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              name: this.userName,
-              class: this.userClass,
-              points: this.points,
-              avatar: this.userIcon,
-              createdAt: new Date().toISOString(),
-              lastUpdate: new Date().toISOString(),
-            }),
+          rankingData.ranking.push({
+            id: Date.now().toString(), // ID único baseado no timestamp
+            name: this.userName,
+            class: this.userClass,
+            points: this.points,
+            avatar: this.userIcon,
+            createdAt: new Date().toISOString(),
+            lastUpdate: new Date().toISOString(),
           });
         }
 
-        // Recarrega o ranking após salvar
-        await this.loadRanking();
+        // Ordena o ranking
+        rankingData.ranking.sort((a, b) => b.points - a.points);
+
+        // Salva o ranking atualizado no JSONbin
+        await fetch(`${API_URL}/${JSONBIN_CONFIG.binId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": JSONBIN_CONFIG.apiKey,
+          },
+          body: JSON.stringify(rankingData),
+        });
+
+        // Atualiza o ranking local
+        this.ranking = rankingData.ranking;
       } catch (error) {
         console.error("Erro ao salvar ranking na API:", error);
         // Exibe mensagem para o usuário
@@ -1975,17 +2001,48 @@ createApp({
     },
     async loadRanking() {
       try {
-        // URL da API (detecta automaticamente)
-        // Lógica mais robusta para funcionar na internet
+        // URL da API JSONbin.io
         const API_URL = this.getApiUrl();
 
-        const response = await fetch(`${API_URL}/ranking`);
-        const ranking = await response.json();
+        // Carrega os dados do ranking do JSONbin
+        const response = await fetch(
+          `${API_URL}/${JSONBIN_CONFIG.binId}/latest`,
+          {
+            method: "GET",
+            headers: {
+              "X-Master-Key": JSONBIN_CONFIG.apiKey,
+              "X-Bin-Meta": false, // Para obter apenas os dados, sem metadados
+            },
+          }
+        );
 
-        // Ordena por pontuação (maior primeiro)
-        this.ranking = ranking.sort((a, b) => b.points - a.points);
+        // Se o bin não for encontrado ou for a primeira vez, inicializa um ranking vazio
+        if (response.status === 404) {
+          this.ranking = [];
+          return;
+        }
+
+        // Processa os dados recebidos
+        const data = await response.json();
+        if (data && data.ranking) {
+          // Ordena por pontuação (maior primeiro)
+          this.ranking = data.ranking.sort((a, b) => b.points - a.points);
+        } else {
+          // Se o formato for inesperado, inicializa um ranking vazio
+          this.ranking = [];
+
+          // Cria uma estrutura inicial correta no JSONbin
+          await fetch(`${API_URL}/${JSONBIN_CONFIG.binId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Master-Key": JSONBIN_CONFIG.apiKey,
+            },
+            body: JSON.stringify({ ranking: [] }),
+          });
+        }
       } catch (error) {
-        console.error("Erro ao carregar ranking da API:", error);
+        console.error("Erro ao carregar ranking da API JSONbin:", error);
         // Define um ranking vazio em caso de falha
         this.ranking = [];
         // Exibe mensagem para o usuário
@@ -2053,30 +2110,44 @@ createApp({
 
     async checkConnection() {
       try {
-        // Lógica mais robusta para funcionar na internet
+        // URL da API JSONbin.io
         const API_URL = this.getApiUrl();
 
         this.connectionStatus = "checking";
 
-        // Tenta fazer uma requisição simples com timeout
+        // Tenta fazer uma requisição simples com timeout para o JSONbin
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-        const response = await fetch(`${API_URL}/ranking`, {
-          method: "GET",
-          signal: controller.signal,
-        });
+        // Verifica a conexão com o JSONbin
+        const response = await fetch(
+          `${API_URL}/${JSONBIN_CONFIG.binId}/latest`,
+          {
+            method: "GET",
+            headers: {
+              "X-Master-Key": JSONBIN_CONFIG.apiKey,
+              "X-Bin-Meta": true, // Só precisamos dos metadados para verificar conexão
+            },
+            signal: controller.signal,
+          }
+        );
 
         clearTimeout(timeoutId);
 
-        if (response.ok) {
+        // Se for 404, significa que o bin ainda não existe, mas a API está online
+        if (response.ok || response.status === 404) {
           this.connectionStatus = "online";
           this.isOnline = true;
+
+          // Se o bin não existir, cria um novo com estrutura inicial
+          if (response.status === 404) {
+            await this.initializeJsonBin();
+          }
         } else {
-          throw new Error("API não respondeu corretamente");
+          throw new Error("API JSONbin não respondeu corretamente");
         }
       } catch (error) {
-        console.warn("Servidor offline:", error);
+        console.warn("JSONbin offline ou erro de conexão:", error);
         this.connectionStatus = "offline";
         this.isOnline = false;
         alert(
@@ -2085,9 +2156,48 @@ createApp({
       }
     },
 
-    // Função removida: syncLocalData
-    _syncLocalData_disabled() {
-      // Funcionalidade removida - não sincroniza mais com localStorage
+    // Inicializa o JSONbin com a estrutura correta
+    async initializeJsonBin() {
+      try {
+        const API_URL = this.getApiUrl();
+
+        // Cria um bin inicial com estrutura correta para o ranking
+        const initialData = {
+          ranking: [
+            {
+              id: "1",
+              name: "Ana Silva",
+              class: "5º Ano A",
+              points: 150,
+              avatar: "https://cdn-icons-png.flaticon.com/512/616/616408.png",
+              createdAt: "2025-06-09T19:30:00.000Z",
+              lastUpdate: "2025-06-09T19:30:00.000Z",
+            },
+            {
+              id: "2",
+              name: "Pedro Santos",
+              class: "4º Ano B",
+              points: 135,
+              avatar: "https://cdn-icons-png.flaticon.com/512/427/427735.png",
+              createdAt: "2025-06-09T19:25:00.000Z",
+              lastUpdate: "2025-06-09T19:25:00.000Z",
+            },
+          ],
+        };
+
+        await fetch(`${API_URL}/${JSONBIN_CONFIG.binId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": JSONBIN_CONFIG.apiKey,
+          },
+          body: JSON.stringify(initialData),
+        });
+
+        console.log("JSONbin inicializado com sucesso!");
+      } catch (error) {
+        console.error("Erro ao inicializar JSONbin:", error);
+      }
     },
   },
 }).mount("#app");
