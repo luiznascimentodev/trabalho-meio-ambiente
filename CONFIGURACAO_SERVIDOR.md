@@ -81,7 +81,7 @@ Se você estiver usando uma hospedagem estática (GitHub Pages, Netlify, Vercel,
 <!-- Configuração da API -->
 <script>
   // Defina a URL completa para o seu servidor JSON
-  window.API_URL = 'https://seu-servidor-api.com';
+  window.API_URL = "https://seu-servidor-api.com";
 </script>
 ```
 
