@@ -858,7 +858,7 @@ const GameQuiz = {
       showNext: false,
       answeredQuestions: new Set(), // Controle de perguntas respondidas
       availableQuestions: [], // Array de perguntas disponíveis
-      currentQuestion: null, //
+      currentQuestion: null, // Pergunta atual
       isGameOver: false, // Controle de fim de jogo
       correctAnswers: 0, // Contador de respostas corretas
       totalAnswered: 0, // Total de perguntas respondidas
