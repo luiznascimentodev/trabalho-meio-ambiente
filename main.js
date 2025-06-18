@@ -859,7 +859,6 @@ const GameQuiz = {
       answeredQuestions: new Set(), // Controle de perguntas respondidas
       availableQuestions: [], // Array de perguntas disponíveis
       currentQuestion: null, //
-
       isGameOver: false, // Controle de fim de jogo
       correctAnswers: 0, // Contador de respostas corretas
       totalAnswered: 0, // Total de perguntas respondidas
@@ -1754,34 +1753,6 @@ const GameMemory = {
   `,
 };
 
-// Configuração da API JSONbin.io
-const JSONBIN_CONFIG = {
-  binId: "685344b38960c979a5ac7388", // Substitua pelo seu Bin ID após criá-lo no JSONbin.io
-  apiKey: "$2a$10$eq14Z/TaFg/dT3vNMv1PWe2hMfb60MK6jtB3JucPXBisgdf7C/5Sq", // Substitua pela sua chave de API
-  // Versão gratuita: https://jsonbin.io/
-};
-
-// Método para determinar a URL correta da API com base no ambiente
-function getApiUrl() {
-  // Verifica se existe uma API configurada específica
-  const configuredApiUrl = window.API_URL;
-  if (configuredApiUrl) return configuredApiUrl;
-
-  const protocol = window.location.protocol;
-  const hostname = window.location.hostname;
-  const port = window.location.port;
-
-  // Ambiente local
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
-    if (port === "8080") return "http://localhost:3001";
-    if (port === "3001") return `${protocol}//${hostname}:3001`;
-    return "http://localhost:3001";
-  }
-
-  // Ambiente de produção (GitHub Pages) - usa JSONbin.io
-  return "https://api.jsonbin.io/v3/b";
-}
-
 // App principal
 createApp({
   data() {
@@ -1890,84 +1861,65 @@ createApp({
     },
     async saveRanking() {
       try {
-        // URL da API JSONbin.io
+        // URL da API (detecta automaticamente)
+        // Lógica mais robusta para funcionar na internet
         const API_URL = this.getApiUrl();
 
-        // Primeiro carrega o ranking atual
-        const currentRankingResponse = await fetch(
-          `${API_URL}/${JSONBIN_CONFIG.binId}/latest`,
-          {
-            method: "GET",
-            headers: {
-              "X-Master-Key": JSONBIN_CONFIG.apiKey,
-              "X-Bin-Meta": false, // Para obter apenas os dados, sem metadados
-            },
-          }
-        );
-
-        // Se o bin não existir, inicializa com um ranking vazio
-        let rankingData;
-        if (currentRankingResponse.status === 404) {
-          rankingData = { ranking: [] };
-        } else {
-          rankingData = await currentRankingResponse.json();
-          if (!rankingData.ranking) {
-            rankingData = { ranking: [] };
-          }
-        }
-
         // Verifica se o usuário já existe no ranking
-        const existingUserIndex = rankingData.ranking.findIndex(
+        const response = await fetch(`${API_URL}/ranking`);
+        const ranking = await response.json();
+
+        const existingUser = ranking.find(
           (u) => u.name === this.userName && u.class === this.userClass
         );
 
-        if (existingUserIndex >= 0) {
+        if (existingUser) {
           // Atualiza pontos apenas se for maior (mantém o melhor resultado)
-          if (this.points > rankingData.ranking[existingUserIndex].points) {
-            rankingData.ranking[existingUserIndex].points = this.points;
-            rankingData.ranking[existingUserIndex].avatar = this.userIcon;
-            rankingData.ranking[existingUserIndex].lastUpdate =
-              new Date().toISOString();
+          if (this.points > existingUser.points) {
+            await fetch(`${API_URL}/ranking/${existingUser.id}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                ...existingUser,
+                points: this.points,
+                avatar: this.userIcon,
+                lastUpdate: new Date().toISOString(),
+              }),
+            });
           }
         } else {
           // Adiciona novo usuário
-          rankingData.ranking.push({
-            id: Date.now().toString(), // ID único baseado no timestamp
-            name: this.userName,
-            class: this.userClass,
-            points: this.points,
-            avatar: this.userIcon,
-            createdAt: new Date().toISOString(),
-            lastUpdate: new Date().toISOString(),
+          await fetch(`${API_URL}/ranking`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: this.userName,
+              class: this.userClass,
+              points: this.points,
+              avatar: this.userIcon,
+              createdAt: new Date().toISOString(),
+              lastUpdate: new Date().toISOString(),
+            }),
           });
         }
 
-        // Ordena o ranking
-        rankingData.ranking.sort((a, b) => b.points - a.points);
-
-        // Salva o ranking atualizado no JSONbin
-        await fetch(`${API_URL}/${JSONBIN_CONFIG.binId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Master-Key": JSONBIN_CONFIG.apiKey,
-          },
-          body: JSON.stringify(rankingData),
-        });
-
-        // Atualiza o ranking local
-        this.ranking = rankingData.ranking;
+        // Recarrega o ranking após salvar
+        await this.loadRanking();
       } catch (error) {
-        console.error("Erro ao salvar ranking na API:", error);
-        // Exibe mensagem para o usuário
-        alert(
-          "Não foi possível salvar sua pontuação. Verifique sua conexão com a internet e tente novamente."
+        console.warn(
+          "Erro ao salvar ranking na API, usando localStorage como fallback:",
+          error
         );
+        // Fallback para localStorage se a API não estiver disponível
+        this.saveRankingLocal();
       }
     },
 
-    // Função removida: saveRankingLocal
-    _saveRankingLocal_disabled() {
+    saveRankingLocal() {
       // Fallback para localStorage (método original)
       let ranking = JSON.parse(localStorage.getItem("ranking") || "[]");
       const idx = ranking.findIndex(
@@ -1990,70 +1942,32 @@ createApp({
       ranking.sort((a, b) => b.points - a.points);
       localStorage.setItem("ranking", JSON.stringify(ranking));
       this.ranking = ranking;
-
-      // Armazena pontos localmente para sincronização futura quando ficar online
-      let unsyncedPoints = JSON.parse(
-        localStorage.getItem("unsyncedPoints") || "{}"
-      );
-      const userKey = `${this.userName}-${this.userClass}`;
-      unsyncedPoints[userKey] = this.points;
-      localStorage.setItem("unsyncedPoints", JSON.stringify(unsyncedPoints));
     },
     async loadRanking() {
       try {
-        // URL da API JSONbin.io
+        // URL da API (detecta automaticamente)
+        // Lógica mais robusta para funcionar na internet
         const API_URL = this.getApiUrl();
 
-        // Carrega os dados do ranking do JSONbin
-        const response = await fetch(
-          `${API_URL}/${JSONBIN_CONFIG.binId}/latest`,
-          {
-            method: "GET",
-            headers: {
-              "X-Master-Key": JSONBIN_CONFIG.apiKey,
-              "X-Bin-Meta": false, // Para obter apenas os dados, sem metadados
-            },
-          }
-        );
+        const response = await fetch(`${API_URL}/ranking`);
+        const ranking = await response.json();
 
-        // Se o bin não for encontrado ou for a primeira vez, inicializa um ranking vazio
-        if (response.status === 404) {
-          this.ranking = [];
-          return;
-        }
+        // Ordena por pontuação (maior primeiro)
+        this.ranking = ranking.sort((a, b) => b.points - a.points);
 
-        // Processa os dados recebidos
-        const data = await response.json();
-        if (data && data.ranking) {
-          // Ordena por pontuação (maior primeiro)
-          this.ranking = data.ranking.sort((a, b) => b.points - a.points);
-        } else {
-          // Se o formato for inesperado, inicializa um ranking vazio
-          this.ranking = [];
-
-          // Cria uma estrutura inicial correta no JSONbin
-          await fetch(`${API_URL}/${JSONBIN_CONFIG.binId}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Master-Key": JSONBIN_CONFIG.apiKey,
-            },
-            body: JSON.stringify({ ranking: [] }),
-          });
-        }
+        // Salva como backup no localStorage
+        localStorage.setItem("ranking_backup", JSON.stringify(this.ranking));
       } catch (error) {
-        console.error("Erro ao carregar ranking da API JSONbin:", error);
-        // Define um ranking vazio em caso de falha
-        this.ranking = [];
-        // Exibe mensagem para o usuário
-        alert(
-          "Não foi possível carregar o ranking. Verifique sua conexão com a internet."
+        console.warn(
+          "Erro ao carregar ranking da API, usando localStorage como fallback:",
+          error
         );
+        // Fallback para localStorage se a API não estiver disponível
+        this.loadRankingLocal();
       }
     },
 
-    // Função removida: loadRankingLocal
-    _loadRankingLocal_disabled() {
+    loadRankingLocal() {
       // Fallback para localStorage (método original)
       const ranking = JSON.parse(
         localStorage.getItem("ranking") ||
@@ -2110,93 +2024,27 @@ createApp({
 
     async checkConnection() {
       try {
-        // URL da API JSONbin.io
+        // Lógica mais robusta para funcionar na internet
         const API_URL = this.getApiUrl();
 
         this.connectionStatus = "checking";
 
-        // Tenta fazer uma requisição simples com timeout para o JSONbin
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-        // Verifica a conexão com o JSONbin
-        const response = await fetch(
-          `${API_URL}/${JSONBIN_CONFIG.binId}/latest`,
-          {
-            method: "GET",
-            headers: {
-              "X-Master-Key": JSONBIN_CONFIG.apiKey,
-              "X-Bin-Meta": true, // Só precisamos dos metadados para verificar conexão
-            },
-            signal: controller.signal,
-          }
-        );
-
-        clearTimeout(timeoutId);
-
-        // Se for 404, significa que o bin ainda não existe, mas a API está online
-        if (response.ok || response.status === 404) {
-          this.connectionStatus = "online";
-          this.isOnline = true;
-
-          // Se o bin não existir, cria um novo com estrutura inicial
-          if (response.status === 404) {
-            await this.initializeJsonBin();
-          }
-        } else {
-          throw new Error("API JSONbin não respondeu corretamente");
-        }
-      } catch (error) {
-        console.warn("JSONbin offline ou erro de conexão:", error);
-        this.connectionStatus = "offline";
-        this.isOnline = false;
-        alert(
-          "O servidor não está disponível. Algumas funcionalidades podem não funcionar corretamente. Verifique sua conexão com a internet."
-        );
-      }
-    },
-
-    // Inicializa o JSONbin com a estrutura correta
-    async initializeJsonBin() {
-      try {
-        const API_URL = this.getApiUrl();
-
-        // Cria um bin inicial com estrutura correta para o ranking
-        const initialData = {
-          ranking: [
-            {
-              id: "1",
-              name: "Ana Silva",
-              class: "5º Ano A",
-              points: 150,
-              avatar: "https://cdn-icons-png.flaticon.com/512/616/616408.png",
-              createdAt: "2025-06-09T19:30:00.000Z",
-              lastUpdate: "2025-06-09T19:30:00.000Z",
-            },
-            {
-              id: "2",
-              name: "Pedro Santos",
-              class: "4º Ano B",
-              points: 135,
-              avatar: "https://cdn-icons-png.flaticon.com/512/427/427735.png",
-              createdAt: "2025-06-09T19:25:00.000Z",
-              lastUpdate: "2025-06-09T19:25:00.000Z",
-            },
-          ],
-        };
-
-        await fetch(`${API_URL}/${JSONBIN_CONFIG.binId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Master-Key": JSONBIN_CONFIG.apiKey,
-          },
-          body: JSON.stringify(initialData),
+        // Tenta fazer uma requisição simples
+        const response = await fetch(`${API_URL}/ranking`, {
+          method: "GET",
+          timeout: 5000,
         });
 
-        console.log("JSONbin inicializado com sucesso!");
+        if (response.ok) {
+          this.connectionStatus = "online";
+          this.isOnline = true;
+        } else {
+          throw new Error("API não respondeu corretamente");
+        }
       } catch (error) {
-        console.error("Erro ao inicializar JSONbin:", error);
+        console.warn("Servidor offline, usando modo local:", error);
+        this.connectionStatus = "offline";
+        this.isOnline = false;
       }
     },
   },
