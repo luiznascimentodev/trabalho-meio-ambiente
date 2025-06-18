@@ -858,7 +858,8 @@ const GameQuiz = {
       showNext: false,
       answeredQuestions: new Set(), // Controle de perguntas respondidas
       availableQuestions: [], // Array de perguntas disponíveis
-      currentQuestion: null, // Pergunta atual
+      currentQuestion: null, //
+
       isGameOver: false, // Controle de fim de jogo
       correctAnswers: 0, // Contador de respostas corretas
       totalAnswered: 0, // Total de perguntas respondidas
@@ -1753,6 +1754,27 @@ const GameMemory = {
   `,
 };
 
+// Método para determinar a URL correta da API com base no ambiente
+function getApiUrl() {
+  // Verifica se existe uma API configurada específica
+  const configuredApiUrl = window.API_URL;
+  if (configuredApiUrl) return configuredApiUrl;
+
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  const port = window.location.port;
+
+  // Ambiente local
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    if (port === "8080") return "http://localhost:3001";
+    if (port === "3001") return `${protocol}//${hostname}:3001`;
+    return "http://localhost:3001";
+  } 
+  
+  // Ambiente de produção (internet)
+  return `${protocol}//${hostname}${port ? ':' + port : ''}/api`;
+}
+
 // App principal
 createApp({
   data() {
@@ -1862,12 +1884,8 @@ createApp({
     async saveRanking() {
       try {
         // URL da API (detecta automaticamente)
-        const API_URL =
-          window.location.port === "8080"
-            ? "http://localhost:3001"
-            : window.location.port === "3001"
-            ? `${window.location.protocol}//${window.location.hostname}:3001`
-            : "http://localhost:3001";
+        // Lógica mais robusta para funcionar na internet
+        const API_URL = this.getApiUrl();
 
         // Verifica se o usuário já existe no ranking
         const response = await fetch(`${API_URL}/ranking`);
@@ -1946,16 +1964,18 @@ createApp({
       ranking.sort((a, b) => b.points - a.points);
       localStorage.setItem("ranking", JSON.stringify(ranking));
       this.ranking = ranking;
+      
+      // Armazena pontos localmente para sincronização futura quando ficar online
+      let unsyncedPoints = JSON.parse(localStorage.getItem("unsyncedPoints") || "{}");
+      const userKey = `${this.userName}-${this.userClass}`;
+      unsyncedPoints[userKey] = this.points;
+      localStorage.setItem("unsyncedPoints", JSON.stringify(unsyncedPoints));
     },
     async loadRanking() {
       try {
         // URL da API (detecta automaticamente)
-        const API_URL =
-          window.location.port === "8080"
-            ? "http://localhost:3001"
-            : window.location.port === "3001"
-            ? `${window.location.protocol}//${window.location.hostname}:3001`
-            : "http://localhost:3001";
+        // Lógica mais robusta para funcionar na internet
+        const API_URL = this.getApiUrl();
 
         const response = await fetch(`${API_URL}/ranking`);
         const ranking = await response.json();
@@ -2032,24 +2052,30 @@ createApp({
 
     async checkConnection() {
       try {
-        const API_URL =
-          window.location.port === "8080"
-            ? "http://localhost:3001"
-            : window.location.port === "3001"
-            ? `${window.location.protocol}//${window.location.hostname}:3001`
-            : "http://localhost:3001";
+        // Lógica mais robusta para funcionar na internet
+        const API_URL = this.getApiUrl();
 
         this.connectionStatus = "checking";
 
-        // Tenta fazer uma requisição simples
+        // Tenta fazer uma requisição simples com timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
         const response = await fetch(`${API_URL}/ranking`, {
           method: "GET",
-          timeout: 5000,
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           this.connectionStatus = "online";
           this.isOnline = true;
+          
+          // Se estava offline e agora está online, tenta sincronizar dados locais
+          if (localStorage.getItem("unsyncedPoints")) {
+            this.syncLocalData();
+          }
         } else {
           throw new Error("API não respondeu corretamente");
         }
@@ -2057,6 +2083,24 @@ createApp({
         console.warn("Servidor offline, usando modo local:", error);
         this.connectionStatus = "offline";
         this.isOnline = false;
+      }
+    },
+    
+    // Sincroniza dados armazenados localmente quando voltar a ficar online
+    async syncLocalData() {
+      try {
+        const unsyncedPoints = JSON.parse(localStorage.getItem("unsyncedPoints") || "{}");
+        if (Object.keys(unsyncedPoints).length === 0) return;
+        
+        // Recupera os pontos do usuário atual que estavam em cache
+        if (unsyncedPoints[`${this.userName}-${this.userClass}`]) {
+          this.points = Math.max(this.points, unsyncedPoints[`${this.userName}-${this.userClass}`]);
+          await this.saveRanking(); // Salva no servidor
+        }
+        
+        localStorage.removeItem("unsyncedPoints");
+      } catch (error) {
+        console.error("Erro ao sincronizar dados locais:", error);
       }
     },
   },
